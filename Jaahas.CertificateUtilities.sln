@@ -4,15 +4,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.1.32407.343
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{10A2813D-C970-4F6F-9A59-94F7C972257F}"
-	ProjectSection(SolutionItems) = preProject
-		src\README.md = src\README.md
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{C4C50D71-6AAC-45A9-9257-5D02A42B61DC}"
 	ProjectSection(SolutionItems) = preProject
 		build\Copyright.props = build\Copyright.props
 		build\NetFX.targets = build\NetFX.targets
-		build\README.md = build\README.md
 		build\version.json = build\version.json
 	EndProjectSection
 EndProject
@@ -33,18 +29,31 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{ADFADB4B-0729-40E6-B241-6E1B89A8731C}"
 	ProjectSection(SolutionItems) = preProject
 		test\Directory.Build.props = test\Directory.Build.props
-		test\README.md = test\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{9EC81ADF-5CE2-4140-96BC-958CB9E0365C}"
 	ProjectSection(SolutionItems) = preProject
 		samples\Directory.Build.props = samples\Directory.Build.props
-		samples\README.md = samples\README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jaahas.CertificateUtilities", "src\Jaahas.CertificateUtilities\Jaahas.CertificateUtilities.csproj", "{3C5D62FA-36FF-44CE-9B6D-FBA88E66DEB3}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3C5D62FA-36FF-44CE-9B6D-FBA88E66DEB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C5D62FA-36FF-44CE-9B6D-FBA88E66DEB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C5D62FA-36FF-44CE-9B6D-FBA88E66DEB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C5D62FA-36FF-44CE-9B6D-FBA88E66DEB3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3C5D62FA-36FF-44CE-9B6D-FBA88E66DEB3} = {10A2813D-C970-4F6F-9A59-94F7C972257F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {94DF2EE3-033D-46CD-9EC3-7BC808B13372}
