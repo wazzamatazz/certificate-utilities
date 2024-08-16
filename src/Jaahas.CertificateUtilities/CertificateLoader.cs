@@ -301,15 +301,17 @@ namespace Jaahas.CertificateUtilities {
             using var store = new X509Store(storeName, storeLocation);
             store.Open(OpenFlags.ReadOnly);
 
-            X509Certificate2? foundCertificate = null;
+            // Try and find the certificate by subject name first, then by thumbprint.
 
-            var certs = store.Certificates.Find(X509FindType.FindBySubjectName, subject, !allowInvalid)
+            var findBySubjectName = store.Certificates.Find(X509FindType.FindBySubjectName, subject, !allowInvalid)
                 .OfType<X509Certificate2>()
                 .Where(x => enhancedKeyUsage == null || HasEnhancedKeyUsage(x, enhancedKeyUsage))
                 .Where(x => x.HasPrivateKey)
                 .OrderByDescending(x => x.NotAfter);
 
-            foreach (var cert in certs) {
+            X509Certificate2? foundCertificate = null;
+
+            foreach (var cert in findBySubjectName) {
                 // Pick the first one if there's no exact match as a fallback to substring default.
                 foundCertificate ??= cert;
 
@@ -319,8 +321,26 @@ namespace Jaahas.CertificateUtilities {
                 }
             }
 
+            if (foundCertificate != null) {
+                return foundCertificate;
+            }
+
+            // No subject name match, try thumbprint.
+
+            var findByThumbprint = store.Certificates.Find(X509FindType.FindByThumbprint, subject, !allowInvalid)
+                .OfType<X509Certificate2>()
+                .Where(x => enhancedKeyUsage == null || HasEnhancedKeyUsage(x, enhancedKeyUsage))
+                .Where(x => x.HasPrivateKey)
+                .OrderByDescending(x => x.NotAfter);
+
+            foreach (var cert in findByThumbprint) {
+                if (string.Equals(cert.Thumbprint, subject, StringComparison.OrdinalIgnoreCase)) {
+                    return cert;
+                }
+            }
+
             if (foundCertificate == null) {
-                throw new InvalidOperationException($"The requested certificate {subject} could not be found in {storeLocation}/{storeName} with AllowInvalid setting: {allowInvalid}.");
+                throw new InvalidOperationException($"The requested certificate '{subject}' could not be found in {storeLocation}/{storeName}.");
             }
 
             return foundCertificate;
