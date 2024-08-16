@@ -56,12 +56,17 @@ namespace Jaahas.CertificateUtilities {
         /// <summary>
         /// Returns <see langword="true"/> if a certificate store-based certificate has been specified.
         /// </summary>
-        public bool IsStoreCert => !string.IsNullOrEmpty(Subject);
+        public bool IsStoreCert => !string.IsNullOrEmpty(Subject) || !string.IsNullOrEmpty(Thumbprint);
 
         /// <summary>
-        /// The subject or thumbprint of the store certificate to use.
+        /// The subject of the store certificate to use.
         /// </summary>
         public string? Subject { get; set; }
+
+        /// <summary>
+        /// The thumbprint of the store certificate to use.
+        /// </summary>
+        public string? Thumbprint { get; set; }
 
         /// <summary>
         /// The name of the certificate store to use.
