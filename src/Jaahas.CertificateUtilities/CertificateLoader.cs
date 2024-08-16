@@ -66,19 +66,27 @@ namespace Jaahas.CertificateUtilities {
         ///   The corresponding <see cref="X509Certificate2"/>, or <see langword="null"/> if a 
         ///   matching certificate cannot be loaded.
         /// </returns>
+        /// <exception cref="ArgumentNullException">
+        ///   <paramref name="certInfo"/> is <see langword="null"/>.
+        /// </exception>
         /// <exception cref="InvalidOperationException">
         ///   <paramref name="certInfo"/> specifies both file and store certificate locations.
         /// </exception>
-        public X509Certificate2? LoadCertificate(CertificateLocation? certInfo, string? enhancedKeyUsage = null) {
+        /// <exception cref="InvalidOperationException">
+        ///   <paramref name="certInfo"/> does not specify a file or store certificate location.
+        /// </exception>
+        public X509Certificate2? LoadCertificate(CertificateLocation certInfo, string? enhancedKeyUsage = null) {
             if (certInfo is null) {
-                LogCertificateNotFound(certInfo, GetEnhancedKeyUsageDisplayName(enhancedKeyUsage));
-                return null;
+                throw new ArgumentNullException(nameof(certInfo));
             }
 
             X509Certificate2? certificate = null;
 
             if (certInfo.IsFileCert && certInfo.IsStoreCert) {
                 throw new InvalidOperationException("Multiple certificate sources specified.");
+            }
+            else if (!certInfo.IsFileCert && !certInfo.IsStoreCert) {
+                throw new InvalidOperationException("No certificate source specified.");
             }
             else if (certInfo.IsFileCert) {
                 var rootPath = _options.CertificateRootPath ?? AppContext.BaseDirectory;
@@ -93,7 +101,7 @@ namespace Jaahas.CertificateUtilities {
                         certificate = LoadCertificateKey(certificate, certificateKeyPath, certInfo.Password);
                     }
                     else {
-                        throw new InvalidOperationException($"The certificate file at '{certificatePath}' can not be found, contains malformed data or does not contain a certificate.");
+                        throw new InvalidOperationException($"The certificate file at '{certificatePath}' could not be found, contains malformed data or does not contain a certificate.");
                     }
 
                     if (certificate != null) {
@@ -102,7 +110,7 @@ namespace Jaahas.CertificateUtilities {
                         }
                     }
                     else {
-                        throw new InvalidOperationException($"The certificate key file at '{certificateKeyPath}' can not be found, contains malformed data or does not contain a PEM encoded key in PKCS8 format.");
+                        throw new InvalidOperationException($"The certificate key file at '{certificateKeyPath}' could not be found, contains malformed data or does not contain a PEM encoded key in PKCS8 format.");
                     }
                 }
 #endif
@@ -287,7 +295,6 @@ namespace Jaahas.CertificateUtilities {
         ///   is <see langword="false"/>.
         /// </exception>
         private static X509Certificate2? LoadFromStoreCert(CertificateLocation certLocation, string? enhancedKeyUsage) {
-            var subject = certLocation.Subject!;
             var storeName = string.IsNullOrEmpty(certLocation.Store) ? StoreName.My.ToString() : certLocation.Store;
             var storeLocation = StoreLocation.CurrentUser;
 
@@ -301,46 +308,41 @@ namespace Jaahas.CertificateUtilities {
             using var store = new X509Store(storeName, storeLocation);
             store.Open(OpenFlags.ReadOnly);
 
-            // Try and find the certificate by subject name first, then by thumbprint.
+            if (!string.IsNullOrEmpty(certLocation.Thumbprint)) {
+                var cert = store.Certificates.Find(X509FindType.FindByThumbprint, certLocation.Thumbprint, !allowInvalid)
+                   .OfType<X509Certificate2>()
+                   .Where(x => enhancedKeyUsage == null || HasEnhancedKeyUsage(x, enhancedKeyUsage))
+                   .Where(x => x.HasPrivateKey)
+                   .OrderByDescending(x => x.NotAfter)
+                   .FirstOrDefault();
 
-            var findBySubjectName = store.Certificates.Find(X509FindType.FindBySubjectName, subject, !allowInvalid)
+                if (cert == null) {
+                    throw new InvalidOperationException($"Certificate with thumbprint '{certLocation.Thumbprint}' could not be found in {storeLocation}/{storeName}.");
+                }
+
+                return cert;
+            }
+
+            X509Certificate2? foundCertificate = null;
+
+            var findBySubjectName = store.Certificates.Find(X509FindType.FindBySubjectName, certLocation.Subject!, !allowInvalid)
                 .OfType<X509Certificate2>()
                 .Where(x => enhancedKeyUsage == null || HasEnhancedKeyUsage(x, enhancedKeyUsage))
                 .Where(x => x.HasPrivateKey)
                 .OrderByDescending(x => x.NotAfter);
-
-            X509Certificate2? foundCertificate = null;
 
             foreach (var cert in findBySubjectName) {
                 // Pick the first one if there's no exact match as a fallback to substring default.
                 foundCertificate ??= cert;
 
-                if (cert.GetNameInfo(X509NameType.SimpleName, true).Equals(subject, StringComparison.OrdinalIgnoreCase)) {
+                if (cert.GetNameInfo(X509NameType.SimpleName, true).Equals(certLocation.Subject, StringComparison.OrdinalIgnoreCase)) {
                     // Exact match
                     return cert;
                 }
             }
 
-            if (foundCertificate != null) {
-                return foundCertificate;
-            }
-
-            // No subject name match, try thumbprint.
-
-            var findByThumbprint = store.Certificates.Find(X509FindType.FindByThumbprint, subject, !allowInvalid)
-                .OfType<X509Certificate2>()
-                .Where(x => enhancedKeyUsage == null || HasEnhancedKeyUsage(x, enhancedKeyUsage))
-                .Where(x => x.HasPrivateKey)
-                .OrderByDescending(x => x.NotAfter);
-
-            foreach (var cert in findByThumbprint) {
-                if (string.Equals(cert.Thumbprint, subject, StringComparison.OrdinalIgnoreCase)) {
-                    return cert;
-                }
-            }
-
             if (foundCertificate == null) {
-                throw new InvalidOperationException($"The requested certificate '{subject}' could not be found in {storeLocation}/{storeName}.");
+                throw new InvalidOperationException($"Certificate with subject '{certLocation.Subject}' could not be found in {storeLocation}/{storeName}.");
             }
 
             return foundCertificate;
