@@ -2,7 +2,7 @@
 // Use build.ps1 or build.sh to run the build script. Command line arguments are documented below.
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-const string DefaultSolutionFile = "./Jaahas.CertificateUtilties.sln";
+const string DefaultSolutionFile = "./Jaahas.CertificateUtilities.sln";
 const string VersionFile = "./build/version.json";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
