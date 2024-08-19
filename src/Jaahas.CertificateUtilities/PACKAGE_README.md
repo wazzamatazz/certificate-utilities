@@ -28,6 +28,18 @@ var certificateFromStore = loader.LoadCertificate(new CertificateLocation() {
 
 var certificateFromFile = loader.LoadCertificate(new CertificateLocation() {
     Path = @"C:\path\to\certificate.pfx",
-    Password = "password"
+    Password = "<PFX password>"
+});
+```
+
+On .NET 8.0 and higher, it is also possible to load certificates and private keys from separate PEM-encoded files:
+
+```csharp
+var loader = new CertificateLoader();
+
+var certificate = loader.LoadCertificate(new CertificateLocation() {
+    Path = @"C:\path\to\certificate.pem",
+    KeyPath = @"C:\path\to\private-key.pem",
+    Password = "<private key password>"
 });
 ```
