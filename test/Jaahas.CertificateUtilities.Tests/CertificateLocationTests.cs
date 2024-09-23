@@ -54,7 +54,8 @@ namespace Jaahas.CertificateUtilities.Tests {
         public void ShouldNotLoadCertificateFromStore(string path) {
             var location = CertificateLocation.CreateFromPath(path);
             var loader = new CertificateLoader();
-            Assert.ThrowsException<InvalidOperationException>(() => loader.LoadCertificate(location));
+            var cert = loader.LoadCertificate(location);
+            Assert.IsNull(cert);
         }
 
 
