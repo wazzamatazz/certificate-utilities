@@ -356,10 +356,6 @@ namespace Jaahas.CertificateUtilities {
                 }
             }
 
-            if (foundCertificate == null) {
-                throw new InvalidOperationException($"Certificate with subject, distinguished name or thumbprint '{certLocation.Subject}' could not be found in {storeLocation}/{storeName}.");
-            }
-
             return foundCertificate;
         }
 
