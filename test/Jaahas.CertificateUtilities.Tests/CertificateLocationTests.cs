@@ -36,7 +36,7 @@ namespace Jaahas.CertificateUtilities.Tests {
 
         [DataTestMethod]
         // Should resolve ASP.NET Core development certificate
-        [DataRow(@"cert:\CurrentUser\My\localhost", true, "1.3.6.1.5.5.7.3.1")] // Server authentication
+        [DataRow(@"cert:\CurrentUser\My\localhost", true, CertificateLoader.ServerAuthenticationOid)]
         // Should resolve ISRG Root X1 (i.e. Let's Encrypt RSA root certificate)
         [DataRow(@"cert:\CurrentUser\Root\ISRG Root X1", false, null)]
         public void ShouldLoadCertificateFromStore(string path, bool requirePrivateKey, string? eku) {
@@ -131,7 +131,7 @@ namespace Jaahas.CertificateUtilities.Tests {
                 location.KeyPath = keyFile.FullName;
 
                 var loader = new CertificateLoader();
-                var loadedCert = loader.LoadCertificate(location, "1.3.6.1.5.5.7.3.2"); // Client authentication
+                var loadedCert = loader.LoadCertificate(location, CertificateLoader.ClientAuthenticationOid); // Client authentication
                 Assert.IsNotNull(loadedCert);
                 Assert.IsTrue(loadedCert.HasPrivateKey);
             }
@@ -155,7 +155,7 @@ namespace Jaahas.CertificateUtilities.Tests {
                 var location = CertificateLocation.CreateFromPath(certFile.FullName);
 
                 var loader = new CertificateLoader();
-                var loadedCert = loader.LoadCertificate(location, "1.3.6.1.5.5.7.3.2"); // Client authentication
+                var loadedCert = loader.LoadCertificate(location, CertificateLoader.ClientAuthenticationOid);
                 Assert.IsNotNull(loadedCert);
                 Assert.IsFalse(loadedCert.HasPrivateKey);
             }
@@ -168,7 +168,7 @@ namespace Jaahas.CertificateUtilities.Tests {
         private X509Certificate2 CreateSelfSignedCertificate() {
             var csr = new CertificateRequest($"CN={TestContext.TestName}", RSA.Create(3072), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             var ekus = new OidCollection() {
-                Oid.FromOidValue("1.3.6.1.5.5.7.3.2", OidGroup.EnhancedKeyUsage) // Client authentication
+                Oid.FromOidValue(CertificateLoader.ClientAuthenticationOid, OidGroup.EnhancedKeyUsage) // Client authentication
             };
             csr.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(ekus, false));
             csr.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
