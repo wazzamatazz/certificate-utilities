@@ -137,9 +137,9 @@ namespace Jaahas.CertificateUtilities {
                 if (!string.IsNullOrWhiteSpace(Location)) {
                     parts.Add($"Location={Location}");
                 }
+                parts.Add($"AllowInvalid={(AllowInvalid ?? false)}");
+                parts.Add($"RequirePrivateKey={(RequirePrivateKey ?? true)}");
             }
-
-            parts.Add($"AllowInvalid={(AllowInvalid ?? false)}");
 
             return $"({string.Join(", ", parts)})";
         }
