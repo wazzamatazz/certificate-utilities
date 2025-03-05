@@ -111,7 +111,7 @@ namespace Jaahas.CertificateUtilities {
         /// 
         /// </remarks>
         public bool? RequirePrivateKey { get; set; }
-
+        
 
         /// <inheritdoc/>
         public override string ToString() {
@@ -187,19 +187,27 @@ namespace Jaahas.CertificateUtilities {
         ///   <paramref name="path"/> is <see langword="null"/> or white space.
         /// </exception>
         /// <remarks>
+        ///
+        /// <para>
+        ///   <see cref="CreateFromPath"/> set either the <see cref="Path"/> property on the
+        ///   <see cref="CertificateLocation"/>, or the <see cref="Subject"/>, <see cref="Store"/>
+        ///   and <see cref="Location"/> properties depending on whether a file system path or
+        ///   certificate store path is specified.
+        /// </para>
         /// 
         /// <para>
-        ///   Certificate store locations can be specified using the following format: 
+        ///   Certificate store paths can be specified using the following format: 
         ///   <c>cert:\{location}\{store}\{thumbprint_or_subject}</c>
         /// </para>
         /// 
         /// <para>
-        ///   The format is case-insensitive and supports both back- and forward-slashes as path 
-        ///   separators. Paths that do not match the above format are treated as file paths.
+        ///   Certificate store paths are case-insensitive and both back- and forward-slashes
+        ///   can be used as path separators. Paths that do not match the above format are treated
+        ///   as file paths.
         /// </para>
         /// 
         /// <para>
-        ///   Notes:
+        ///   Additional notes on certificate store paths:
         /// </para>
         /// 
         /// <list type="bullet">
@@ -232,26 +240,25 @@ namespace Jaahas.CertificateUtilities {
         ///   </item>
         /// </list>
         /// 
-        /// 
-        /// 
         /// </remarks>
         public static CertificateLocation CreateFromPath(string path) {
             if (string.IsNullOrWhiteSpace(path)) {
-                throw new ArgumentOutOfRangeException(nameof(path));
+                throw new ArgumentOutOfRangeException(nameof(path), "Path cannot be null or white space.");
             }
-
+            
+            var location = new CertificateLocation();
+            
             var match = GetCertificateStorePathPatcher().Match(path);
             if (match.Success) {
-                return new CertificateLocation() {
-                    Location = match.Groups["location"].Value,
-                    Store = match.Groups["store"].Value,
-                    Subject = match.Groups["subject"].Value
-                };
+                location.Location = match.Groups["location"].Value;
+                location.Store = match.Groups["store"].Value;
+                location.Subject = match.Groups["subject"].Value;
             }
-
-            return new CertificateLocation() {
-                Path = path
-            };
+            else {
+                location.Path = path;
+            }
+            
+            return location;
         }
 
     }
