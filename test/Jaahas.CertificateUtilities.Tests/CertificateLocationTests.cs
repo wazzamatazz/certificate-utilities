@@ -38,7 +38,7 @@ namespace Jaahas.CertificateUtilities.Tests {
         // Should resolve ASP.NET Core development certificate
         [DataRow(@"cert:\CurrentUser\My\localhost", true, CertificateLoader.ServerAuthenticationOid)]
         // Should resolve ISRG Root X1 (i.e. Let's Encrypt RSA root certificate)
-        [DataRow(@"cert:\CurrentUser\Root\ISRG Root X1", false, null)]
+        [DataRow(@"cert:\LocalMachine\Root\ISRG Root X1", false, null)]
         public void ShouldLoadCertificateFromStore(string path, bool requirePrivateKey, string? eku) {
             var location = CertificateLocation.CreateFromPath(path);
             location.RequirePrivateKey = requirePrivateKey;
@@ -50,7 +50,7 @@ namespace Jaahas.CertificateUtilities.Tests {
 
         [DataTestMethod]
         [DataRow(@"cert:\CurrentUser\My\does_not_exist")]
-        [DataRow(@"cert:\CurrentUser\Root\ISRG Root X1")] // Private key not available
+        [DataRow(@"cert:\LocalMachine\Root\ISRG Root X1")] // Private key not available
         public void ShouldNotLoadCertificateFromStore(string path) {
             var location = CertificateLocation.CreateFromPath(path);
             var loader = new CertificateLoader();
@@ -74,7 +74,7 @@ namespace Jaahas.CertificateUtilities.Tests {
                 location.Password = password;
 
                 var loader = new CertificateLoader();
-                var loadedCert = loader.LoadCertificate(location, "1.3.6.1.5.5.7.3.2"); // Client authentication
+                var loadedCert = loader.LoadClientCertificate(location);
                 Assert.IsNotNull(loadedCert);
                 Assert.IsTrue(loadedCert.HasPrivateKey);
             }
@@ -97,14 +97,14 @@ namespace Jaahas.CertificateUtilities.Tests {
                 File.WriteAllText(certFile.FullName, cert.ExportCertificatePem());
 
                 var keyFile = new FileInfo(Path.Combine(tempDir.FullName, "mycert.key"));
-                File.WriteAllText(keyFile.FullName, cert.GetRSAPrivateKey().ExportEncryptedPkcs8PrivateKeyPem(password, new PbeParameters(PbeEncryptionAlgorithm.Aes256Cbc, HashAlgorithmName.SHA256, 30000)));
+                File.WriteAllText(keyFile.FullName, cert.GetRSAPrivateKey()!.ExportEncryptedPkcs8PrivateKeyPem(password, new PbeParameters(PbeEncryptionAlgorithm.Aes256Cbc, HashAlgorithmName.SHA256, 30000)));
 
                 var location = CertificateLocation.CreateFromPath(certFile.FullName);
                 location.KeyPath = keyFile.FullName;
                 location.Password = password;
 
                 var loader = new CertificateLoader();
-                var loadedCert = loader.LoadCertificate(location, "1.3.6.1.5.5.7.3.2"); // Client authentication
+                var loadedCert = loader.LoadClientCertificate(location);
                 Assert.IsNotNull(loadedCert);
                 Assert.IsTrue(loadedCert.HasPrivateKey);
             }
@@ -126,13 +126,13 @@ namespace Jaahas.CertificateUtilities.Tests {
                 File.WriteAllText(certFile.FullName, cert.ExportCertificatePem());
 
                 var keyFile = new FileInfo(Path.Combine(tempDir.FullName, "mycert.key"));
-                File.WriteAllText(keyFile.FullName, cert.GetRSAPrivateKey().ExportPkcs8PrivateKeyPem());
+                File.WriteAllText(keyFile.FullName, cert.GetRSAPrivateKey()!.ExportPkcs8PrivateKeyPem());
 
                 var location = CertificateLocation.CreateFromPath(certFile.FullName);
                 location.KeyPath = keyFile.FullName;
 
                 var loader = new CertificateLoader();
-                var loadedCert = loader.LoadCertificate(location, CertificateLoader.ClientAuthenticationOid); // Client authentication
+                var loadedCert = loader.LoadClientCertificate(location);
                 Assert.IsNotNull(loadedCert);
                 Assert.IsTrue(loadedCert.HasPrivateKey);
             }
@@ -156,7 +156,7 @@ namespace Jaahas.CertificateUtilities.Tests {
                 var location = CertificateLocation.CreateFromPath(certFile.FullName);
 
                 var loader = new CertificateLoader();
-                var loadedCert = loader.LoadCertificate(location, CertificateLoader.ClientAuthenticationOid);
+                var loadedCert = loader.LoadClientCertificate(location);
                 Assert.IsNotNull(loadedCert);
                 Assert.IsFalse(loadedCert.HasPrivateKey);
             }
@@ -169,7 +169,7 @@ namespace Jaahas.CertificateUtilities.Tests {
         private X509Certificate2 CreateSelfSignedCertificate() {
             var csr = new CertificateRequest($"CN={TestContext.TestName}", RSA.Create(3072), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             var ekus = new OidCollection() {
-                Oid.FromOidValue(CertificateLoader.ClientAuthenticationOid, OidGroup.EnhancedKeyUsage) // Client authentication
+                new Oid(CertificateLoader.ClientAuthenticationOid)
             };
             csr.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(ekus, false));
             csr.CertificateExtensions.Add(new X509BasicConstraintsExtension(false, false, 0, true));
