@@ -18,12 +18,28 @@ The package contains assemblies for both .NET Framework 4.7.2 and .NET 8.0. Some
 ```csharp
 var loader = new CertificateLoader();
 
+// Load from a store.
 var certificateFromStore = loader.LoadCertificate(new CertificateLocation() {
+    Subject = "MyCertificate",
+    Store = "My",
+    Location = "CurrentUser"
+});
+
+// Load from a store and specify a required enhanced key usage.
+var certificateWithEkuFromStore = loader.LoadCertificate(new CertificateLocation() {
     Subject = "MyCertificate",
     Store = "My",
     Location = "CurrentUser"
 }, enhancedKeyUsage: CertificateLoader.ServerAuthenticationOid);
 
+// Load from a store using an extension method to specify a required enhanced key usage.
+var certificateWithEkuFromStore = loader.LoadServerCertificate(new CertificateLocation() {
+    Subject = "MyCertificate",
+    Store = "My",
+    Location = "CurrentUser"
+});
+
+// Load from a PFX file.
 var certificateFromFile = loader.LoadCertificate(new CertificateLocation() {
     Path = @"C:\path\to\certificate.pfx",
     Password = "<PFX password>"

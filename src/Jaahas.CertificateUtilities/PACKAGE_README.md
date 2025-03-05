@@ -1,4 +1,4 @@
-# Jaahas.CertificateUtilties
+# Jaahas.CertificateUtilities
 
 This package provides a set of utilities for working with X.509 certificates.
 
@@ -15,17 +15,33 @@ The package contains assemblies for both .NET Framework 4.7.2 and .NET 8.0. Some
 
 ## Certificate Loader
 
-The `CertificateLoader` class provides a simple way to load client or server certificates from the file system or from the Windows certificate store. It is largely based on Kestrel's [internal certificate loader](https://github.com/dotnet/aspnetcore/blob/main/src/Servers/Kestrel/Core/src/Internal/Certificates/CertificateConfigLoader.cs).
+The `CertificateLoader` class provides a simple way to load client or server certificates from the file system or from a certificate store. It is largely based on Kestrel's [internal certificate loader](https://github.com/dotnet/aspnetcore/blob/main/src/Servers/Kestrel/Core/src/Internal/Certificates/CertificateConfigLoader.cs).
 
 ```csharp
 var loader = new CertificateLoader();
 
+// Load from a store.
 var certificateFromStore = loader.LoadCertificate(new CertificateLocation() {
+    Subject = "MyCertificate",
+    Store = "My",
+    Location = "CurrentUser"
+});
+
+// Load from a store and specify a required enhanced key usage.
+var certificateWithEkuFromStore = loader.LoadCertificate(new CertificateLocation() {
     Subject = "MyCertificate",
     Store = "My",
     Location = "CurrentUser"
 }, enhancedKeyUsage: CertificateLoader.ServerAuthenticationOid);
 
+// Load from a store using an extension method to specify a required enhanced key usage.
+var certificateWithEkuFromStore = loader.LoadServerCertificate(new CertificateLocation() {
+    Subject = "MyCertificate",
+    Store = "My",
+    Location = "CurrentUser"
+});
+
+// Load from a file.
 var certificateFromFile = loader.LoadCertificate(new CertificateLocation() {
     Path = @"C:\path\to\certificate.pfx",
     Password = "<PFX password>"
